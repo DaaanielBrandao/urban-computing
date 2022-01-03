@@ -49,7 +49,7 @@ def main():
     ground_truth = read_ground_truth()
     poi_coos = read_poi_coos()
 
-    PFM.train(sparse_training_matrix, max_iters=10, learning_rate=1e-4)
+    PFM.train(sparse_training_matrix, max_iters=30, learning_rate=1e-4)
     PFM.save_model("./tmp/")
     # PFM.load_model("./tmp/")
     MGM.multi_center_discovering(sparse_training_matrix, poi_coos)
@@ -108,7 +108,9 @@ if __name__ == '__main__':
 
     top_k = 100
 
-    PFM = PoissonFactorModel(K=30, alpha=20.0, beta=0.2)
+    PFM = PoissonFactorModel(K=30, alpha=20.0, beta=0.2, sim = True)
+
     MGM = MultiGaussianModel(alpha=0.2, theta=0.02, dmax=15)
 
     main()
+
