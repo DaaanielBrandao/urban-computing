@@ -71,6 +71,7 @@ def main():
 
             predicted = list(reversed(overall_scores.argsort()))[:top_k]
             actual = ground_truth[uid]
+            #print(predicted,actual)
 
             precision.append(precisionk(actual, predicted[:10]))
             recall.append(recallk(actual, predicted[:10]))

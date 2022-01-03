@@ -66,8 +66,6 @@ class PoissonFactorModel(object):
         self.b_u = np.zeros(M)
         self.b_i = np.zeros(N)
         self.b =F[np.nonzero(F)].mean()
-        #print(self.b)
-        #
 
         self.cat = self.read_cat()
 
@@ -82,6 +80,8 @@ class PoissonFactorModel(object):
         
         #
         #self.b = np.mean(F_dok[np.where(F_dok != 0)])
+        self.b = np.mean(F_dok[np.nonzero(F_dok)])
+        print(self.b)
         #
         T1 = self.T1
         T0 = self.T0
@@ -103,10 +103,9 @@ class PoissonFactorModel(object):
             for i, j in entry_index:
                 #prediction = self.predict(i, j)
                 #e = (F_Y[i,j] - prediction)
-        
                 #print(i,' ',j ,': ',prediction)
-                #self.b_u[i] += alpha * (e - beta * self.b_u[i])
-                #self.b_i[j] += alpha * (e - beta * self.b_i[j])         
+                #self.b_u[i] += learning_rate_k * (e - beta * self.b_u[i])
+                #self.b_i[j] += learning_rate_k * (e - beta * self.b_i[j])         
                 F_Y[i, j] = 1.0 * F_dok[i, j] / U[i].dot(L[j]) - 1
             F_Y = F_Y.tocsr()
 
@@ -140,5 +139,5 @@ class PoissonFactorModel(object):
             return 1.0 / (1 + math.exp(-self.U[uid].dot(self.L[lid])))
         elif self.sim:
            #print(lid,lid in self.cat)
-            return self.U[uid].dot(self.L[lid]) * self.Sim(self.cat[lid])
+            return self.U[uid].dot(self.L[lid]) * self.Sim(self.cat[lid]) #+ self.b_u[uid] + self.b_i[lid] + self.b
         return self.U[uid].dot(self.L[lid]) 
