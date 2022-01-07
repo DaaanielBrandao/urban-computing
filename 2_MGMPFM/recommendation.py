@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sparse
-
+import json
+import os
 from collections import defaultdict
 
 from lib.PoissonFactorModel import PoissonFactorModel
@@ -49,20 +50,74 @@ def main():
     ground_truth = read_ground_truth()
     poi_coos = read_poi_coos()
 
-    PFM.train(sparse_training_matrix, max_iters=30, learning_rate=1e-4)
+    PFM.train(sparse_training_matrix, max_iters=2, learning_rate=1e-4)
     PFM.save_model("./tmp/")
     # PFM.load_model("./tmp/")
     MGM.multi_center_discovering(sparse_training_matrix, poi_coos)
 
     result_out = open("./result/aaai12_top_" + str(top_k) + ".txt", 'w')
 
+    file1 = open('new_data/fsq_user_checkins.txt', 'r')
+    Lines1 = file1.readlines()
+    user_checkin = {}
+    for line in Lines1:
+        line_split = line.split()
+        user_checkin[int(line_split[0])] = line_split[1]
+        
     all_uids = list(range(user_num))
     all_lids = list(range(poi_num))
     np.random.shuffle(all_uids)
 
     precision, recall = [], []
+    split = {
+        'A': {
+            'precision' : [],
+            'recall' : []
+        },
+        'B': {
+            'precision' : [],
+            'recall' : []
+        },
+        'C': {
+            'precision' : [],
+            'recall' : []
+        },
+        'D': {
+            'precision' : [],
+            'recall' : []
+        },
+        'E': {
+            'precision' : [],
+            'recall' : []
+        },
+        'F': {
+            'precision' : [],
+            'recall' : []
+        },  
+    }
+    #./result/aaai12_top_
+    try_num = 1
+    similarity = 'sim'
+    ratio = '80-20'
+    precision_path =  "./result/"+similarity+"_precision_"+ratio+"_"+str(try_num)+".json"
+    recall_path = "./result/"+similarity+"_recall_"+ratio+"_"+str(try_num)+".json"
+    split_path =  "./result/"+similarity+"_split_"+ratio+"_"+str(try_num)+".json"
+    if os.path.isfile(precision_path):
+        a_file = open(precision_path, "r")
+        precision = json.load(a_file)
+        b_file = open(recall_path, "r")
+        recall = json.load(b_file)
+        c_file = open(split_path, "r")
+        split = json.load(c_file)
+    cnt2 = 0
+    print("num uids:", len(all_uids))
     for cnt, uid in enumerate(all_uids):
+
         if uid in ground_truth:
+            if cnt2 < len(precision):
+                cnt2+=1
+                print('oi')
+                continue
             overall_scores = [PFM.predict(uid, lid) * MGM.predict(uid, lid)
                               if (uid, lid) not in training_tuples else -1
                               for lid in all_lids]
@@ -75,13 +130,26 @@ def main():
 
             precision.append(precisionk(actual, predicted[:10]))
             recall.append(recallk(actual, predicted[:10]))
+            split[user_checkin[uid]]['precision'].append(precisionk(actual, predicted[:10]))
+            split[user_checkin[uid]]['recall'].append(recallk(actual, predicted[:10]))
 
-            print(cnt, uid, "pre@10:", np.mean(precision), "rec@10:", np.mean(recall))
+            #print(cnt, uid, "pre@10:", np.mean(precision), "rec@10:", np.mean(recall))
             result_out.write('\t'.join([
                 str(cnt),
                 str(uid),
                 ','.join([str(lid) for lid in predicted])
             ]) + '\n')
+            if cnt % 10 == 0:
+                precision_file = open(precision_path, "w")
+                precision_file = json.dump(precision, precision_file)
+                recall_file = open(recall_path, "w")
+                recall_file = json.dump(recall, recall_file)
+                split_file = open(split_path, "w")
+                split_file = json.dump(split, split_file)
+                print(cnt, uid, "pre@10:", np.mean(precision), "rec@10:", np.mean(recall))
+                for s,i in split.items():
+                    print(s,"pre@10:", np.mean(i['precision']), "rec@10:", np.mean(i['recall']))
+        cnt2+=1
 
 
 if __name__ == '__main__':

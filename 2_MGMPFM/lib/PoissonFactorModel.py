@@ -34,16 +34,23 @@ class PoissonFactorModel(object):
     def read_cat(self):
         file1 = open('./new_data/fsq_pois_cats.txt', 'r')
         Lines = file1.readlines()
+        file2 = open('./new_data/fsq_user_cat.txt', 'r')
+        Lines2 = file2.readlines()
         cat_dict = {}
+        cat_user_dict = {}
         self.C1 = {}
         self.C0 = random.uniform(0, 0.5)
         for line in Lines:
             line_split = line.split()
             cat_dict[int(line_split[0])] = line_split[1]
             self.C1[line_split[1]] = random.uniform(0, 0.5)
+        for line in Lines2:
+            line_split = line.split()
+            cat_user_dict[int(line_split[0])] = line_split[1]
+            self.C1[line_split[1]] = random.uniform(0, 0.5)
         #print(len(self.C1))
         #print(cat_dict)
-        return cat_dict
+        return cat_dict, cat_user_dict
     def read_totd(self):
         file1 = open('./new_data/fsq_poi_totd.txt', 'r')
         Lines1 = file1.readlines()
@@ -103,7 +110,7 @@ class PoissonFactorModel(object):
         self.b_i = np.zeros(N)
         self.b =F[np.nonzero(F)].mean()
 
-        self.cat = self.read_cat()
+        self.cat, self.cat_user = self.read_cat()
         self.totd_poi, self.totd_user = self.read_totd()
         self.season_poi, self.season_user = self.read_season()
 
@@ -180,14 +187,14 @@ class PoissonFactorModel(object):
         print("Done. Elapsed time:", time.time() - ctime, "s")
         self.U, self.L = U, L
 
-    def Sim(self,cat,totd_user,totd_poi,season_user,season_poi):
+    def Sim(self,cat_user,cat_poi,totd_user,totd_poi,season_user,season_poi):
         #print(self.Dist(self.C1[cat],self.C0))
-        return (1 - self.Dist(self.C1[cat],self.C0))*(1 - self.Dist(self.T1[totd_user],self.T1[totd_poi]))*(1 - self.Dist(self.S1[season_user],self.S1[season_poi]))
+        return (1 - self.Dist(self.C1[cat_user],self.C1[cat_poi]))*(1 - self.Dist(self.T1[totd_user],self.T1[totd_poi]))*(1 - self.Dist(self.S1[season_user],self.S1[season_poi]))
 
     def predict(self, uid, lid, sigmoid=False):
         if sigmoid:
             return 1.0 / (1 + math.exp(-self.U[uid].dot(self.L[lid])))
         elif self.sim:
            #print(lid,lid in self.cat)
-            return self.U[uid].dot(self.L[lid]) * self.Sim(self.cat[lid], self.totd_user[uid],self.totd_poi[lid],self.season_user[uid],self.season_poi[lid]) #+ self.b_u[uid] + self.b_i[lid] + self.b
+            return self.U[uid].dot(self.L[lid]) * self.Sim(self.cat_user[uid],self.cat[lid], self.totd_user[uid],self.totd_poi[lid],self.season_user[uid],self.season_poi[lid]) #+ self.b_u[uid] + self.b_i[lid] + self.b
         return self.U[uid].dot(self.L[lid]) 
