@@ -50,7 +50,7 @@ def main():
     ground_truth = read_ground_truth()
     poi_coos = read_poi_coos()
 
-    PFM.train(sparse_training_matrix, max_iters=2, learning_rate=1e-4)
+    PFM.train(sparse_training_matrix, max_iters=30, learning_rate=1e-4)
     PFM.save_model("./tmp/")
     # PFM.load_model("./tmp/")
     MGM.multi_center_discovering(sparse_training_matrix, poi_coos)
@@ -139,6 +139,8 @@ def main():
                 str(uid),
                 ','.join([str(lid) for lid in predicted])
             ]) + '\n')
+            if cnt % 5 == 0:
+                print(cnt, uid, "pre@10:", np.mean(precision), "rec@10:", np.mean(recall))
             if cnt % 10 == 0:
                 precision_file = open(precision_path, "w")
                 precision_file = json.dump(precision, precision_file)
@@ -146,7 +148,6 @@ def main():
                 recall_file = json.dump(recall, recall_file)
                 split_file = open(split_path, "w")
                 split_file = json.dump(split, split_file)
-                print(cnt, uid, "pre@10:", np.mean(precision), "rec@10:", np.mean(recall))
                 for s,i in split.items():
                     print(s,"pre@10:", np.mean(i['precision']), "rec@10:", np.mean(i['recall']))
         cnt2+=1
