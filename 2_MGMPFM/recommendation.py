@@ -98,7 +98,7 @@ def main():
     #./result/aaai12_top_
     try_num = 1
     similarity = 'sim'
-    ratio = '80-20'
+    ratio = '70-30'
     precision_path =  "./result/"+similarity+"_precision_"+ratio+"_"+str(try_num)+".json"
     recall_path = "./result/"+similarity+"_recall_"+ratio+"_"+str(try_num)+".json"
     split_path =  "./result/"+similarity+"_split_"+ratio+"_"+str(try_num)+".json"
